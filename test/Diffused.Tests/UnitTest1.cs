@@ -12,7 +12,6 @@ namespace Diffused.Tests
 {
     public class InfrastructureTests
     {
-        
         private readonly ServiceCollection services;
 
         public InfrastructureTests(ITestOutputHelper output)
@@ -22,12 +21,11 @@ namespace Diffused.Tests
             services = new ServiceCollection();
 
             // logging
-            
+
             var logger = output.SetupLogging().ForContext("SourceContext", "InfrastructureTests");
-            
+
             services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(logger, true));
             services.AddNodeSerivces();
-
         }
 
         [Fact]

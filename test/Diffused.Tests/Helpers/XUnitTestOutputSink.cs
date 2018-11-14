@@ -7,7 +7,7 @@ using Xunit.Abstractions;
 
 namespace Diffused.Tests.Helpers
 {
-    public class XUnitTestOutputSink: ILogEventSink
+    public class XUnitTestOutputSink : ILogEventSink
     {
         private readonly ITestOutputHelper output;
         private readonly ITextFormatter textFormatter;
@@ -25,9 +25,6 @@ namespace Diffused.Tests.Helpers
             var renderSpace = new StringWriter();
             textFormatter.Format(logEvent, renderSpace);
             output.WriteLine(renderSpace.ToString());
-           
-         
-
         }
     }
 }

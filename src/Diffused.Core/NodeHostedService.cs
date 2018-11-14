@@ -21,18 +21,17 @@ namespace Diffused.Core
 
         public IServiceProvider Services { get; }
 
-        public  async Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
             logger.LogInformation("Node Hosted Service is starting.");
 
             using (var scope = Services.CreateScope())
             {
                 scopedProcessingService = scope.ServiceProvider.GetRequiredService<Node>();
-                
+
                 await scopedProcessingService.BootstrapBlock.SendAsync(new Bootstrap(), cancellationToken);
                 scopedProcessingService.BootstrapBlock.Complete();
             }
-
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
@@ -40,13 +39,6 @@ namespace Diffused.Core
             logger.LogInformation("Node Hosted Service is stopping.");
 
             await scopedProcessingService.BootstrapBlock.Completion;
-
-
         }
-
-
-     
-
-
     }
 }

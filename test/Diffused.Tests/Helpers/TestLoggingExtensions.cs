@@ -6,7 +6,7 @@ namespace Diffused.Tests.Helpers
 {
     public static class TestLoggingExtensions
     {
-        public static ILogger SetupLogging(this ITestOutputHelper output, LogEventLevel logEventLevel= LogEventLevel.Verbose)
+        public static ILogger SetupLogging(this ITestOutputHelper output, LogEventLevel logEventLevel = LogEventLevel.Verbose)
         {
             return Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Is(logEventLevel)

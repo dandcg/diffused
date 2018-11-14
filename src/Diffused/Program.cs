@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Diffused.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,9 +8,9 @@ using Serilog.Events;
 
 namespace Diffused
 {
-    public  class Program
+    public class Program
     {
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
@@ -31,18 +30,10 @@ namespace Diffused
                         config.AddCommandLine(args);
                     }
                 })
-                .ConfigureServices((hostContext, services) =>
-                {
-                    services.AddHostedService<NodeHostedService>();
-                })
+                .ConfigureServices((hostContext, services) => { services.AddHostedService<NodeHostedService>(); })
                 .UseSerilog();
 
             await builder.RunConsoleAsync();
         }
-
-
-
-
-
     }
 }

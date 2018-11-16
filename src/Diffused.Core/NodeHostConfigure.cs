@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Diffused.Core.ActorImpl;
+using Diffused.Core.NodeImpl;
+using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Diffused.Core
 {
@@ -8,7 +11,10 @@ namespace Diffused.Core
 
         {
             services.AddHostedService<NodeHostedService>();
-            services.AddSingleton<Node>();
+
+            services.AddScoped<Node>();
+
+            services.AddMediatR(typeof(TestHandler));
         }
     }
 }

@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
+using Diffused.Core.NodeImpl;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -11,26 +12,28 @@ namespace Diffused.Core
     public class NodeHostedService : IHostedService
     {
         private readonly ILogger logger;
-        private Node scopedProcessingService;
+
+        private readonly IServiceProvider services;
+
+        internal List<Node> HostedNodes = new List<Node>();
 
         public NodeHostedService(IServiceProvider services, ILogger<NodeHostedService> logger)
         {
-            Services = services;
+            this.services = services;
             this.logger = logger;
         }
-
-        public IServiceProvider Services { get; }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             logger.LogInformation("Node Hosted Service is starting.");
 
-            using (var scope = Services.CreateScope())
+            using (var scope = services.CreateScope())
             {
-                scopedProcessingService = scope.ServiceProvider.GetRequiredService<Node>();
+                var node = scope.ServiceProvider.GetRequiredService<Node>();
 
-                await scopedProcessingService.BootstrapBlock.SendAsync(new Bootstrap(), cancellationToken);
-                scopedProcessingService.BootstrapBlock.Complete();
+                await node.StartAsync(cancellationToken);
+
+                HostedNodes.Add(node);
             }
         }
 
@@ -38,7 +41,16 @@ namespace Diffused.Core
         {
             logger.LogInformation("Node Hosted Service is stopping.");
 
-            await scopedProcessingService.BootstrapBlock.Completion;
+            var tasks = new List<Task>();
+
+            foreach (var node in HostedNodes)
+            {
+                tasks.Add(node.StopAsync(cancellationToken));
+            }
+
+            await Task.WhenAll(tasks);
+
+            logger.LogInformation("Node Hosted Service is stopped.");
         }
     }
 }

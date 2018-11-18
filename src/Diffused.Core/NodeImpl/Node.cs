@@ -27,7 +27,6 @@ namespace Diffused.Core.NodeImpl
                     mediator.Send(new Test(NodeId));
                     mediator.Send(new Test(NodeId));
                     mediator.Send(new Test(NodeId));
-
                 });
         }
 
@@ -36,8 +35,6 @@ namespace Diffused.Core.NodeImpl
             logger.LogInformation("Node {NodeId} is starting.", NodeId);
 
             await BootstrapBlock.SendAsync(new Bootstrap(), cancellationToken);
-
-
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)

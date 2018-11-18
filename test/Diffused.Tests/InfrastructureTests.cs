@@ -13,6 +13,7 @@ namespace Diffused.Tests
     public class InfrastructureTests
     {
         private readonly ServiceCollection services;
+        private ServiceProvider serviceProvider;
 
         public InfrastructureTests(ITestOutputHelper output)
         {
@@ -28,12 +29,20 @@ namespace Diffused.Tests
             services.AddNodeSerivces();
         }
 
+        public T GetService<T>()
+        {
+            if (serviceProvider == null)
+            {
+                serviceProvider = services.BuildServiceProvider();
+            }
+
+            return serviceProvider.GetService<T>();
+        }
+
         [Fact]
         public async Task Test1()
         {
-            var serviceProvider = services.BuildServiceProvider();
-
-            var service = serviceProvider.GetService<IHostedService>() as NodeHostedService;
+            var service = GetService<IHostedService>();
 
             await service.StartAsync(CancellationToken.None);
 

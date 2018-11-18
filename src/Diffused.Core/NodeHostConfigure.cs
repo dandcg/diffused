@@ -14,7 +14,9 @@ namespace Diffused.Core
 
             services.AddScoped<Node>();
 
-            services.AddMediatR(typeof(TestHandler));
+            //services.AddScoped<INotificationHandler<Test>,TestHandler>();
+
+            services.AddMediatR(typeof(TestHandler) );
         }
     }
 }

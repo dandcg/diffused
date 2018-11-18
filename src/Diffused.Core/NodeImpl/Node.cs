@@ -24,7 +24,9 @@ namespace Diffused.Core.NodeImpl
                 {
                     logger.LogInformation("Bootstrap");
 
-                    mediator.Publish(new Test(NodeId));
+                    mediator.Send(new Test(NodeId));
+                    mediator.Send(new Test(NodeId));
+                    mediator.Send(new Test(NodeId));
 
                 });
         }

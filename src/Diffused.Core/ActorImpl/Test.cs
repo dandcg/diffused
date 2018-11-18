@@ -3,14 +3,14 @@ using MediatR;
 
 namespace Diffused.Core.ActorImpl
 {
-    public class Test :INotification
+    public class Test :IRequest
     {
-        private readonly Guid nodeId;
+        public Guid NodeId { get; }
 
         public Test(Guid nodeId)
         {
-            this.nodeId = nodeId;
-  }
+            NodeId = nodeId;
+        }
     }
 
 

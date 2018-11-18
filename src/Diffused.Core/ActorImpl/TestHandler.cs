@@ -2,14 +2,26 @@
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace Diffused.Core.ActorImpl
 {
-    public class TestHandler:INotificationHandler<Test>
+    public class TestHandler:IRequestHandler<Test>
     {
-        public Task Handle(Test notification, CancellationToken cancellationToken)
+        private readonly ILogger<NodeHostedService> logger;
+        private readonly IMediator mediator;
+        internal Guid HandlerId = Guid.NewGuid();
+
+        public TestHandler(ILogger<NodeHostedService> logger, IMediator mediator)
         {
-            throw new NotImplementedException();
+            this.logger = logger;
+            this.mediator = mediator;
+        }
+
+        public Task<Unit> Handle(Test request, CancellationToken cancellationToken)
+        {
+           logger.LogInformation("Test Request {NodeId} with {HandlerId}",request.NodeId,HandlerId);
+            return null;
         }
     }
 }

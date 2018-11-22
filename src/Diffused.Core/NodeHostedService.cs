@@ -14,8 +14,9 @@ namespace Diffused.Core
 
         private readonly IServiceProvider services;
 
-        internal Node Node;
+        private Node node;
         private IServiceScope scope;
+        private Task executingTask;
 
         public NodeHostedService(IServiceProvider services, ILogger<NodeHostedService> logger)
         {
@@ -23,18 +24,18 @@ namespace Diffused.Core
             this.logger = logger;
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        public Task StartAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             scope = services.CreateScope();
 
-            Node = scope.ServiceProvider.GetRequiredService<Node>();
+            node = scope.ServiceProvider.GetRequiredService<Node>();
 
-            await Node.StartAsync(cancellationToken);
+            return node.StartAsync(cancellationToken);
         }
 
-        public async Task StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            await Node.StopAsync(cancellationToken);
+            await node.StopAsync(cancellationToken);
 
             scope.Dispose();
         }

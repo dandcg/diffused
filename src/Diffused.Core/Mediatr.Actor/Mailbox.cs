@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using MediatR;
 
@@ -8,9 +9,9 @@ namespace Diffused.Core.Mediatr.Actor
     {
         private readonly ActionBlock<TRequest> queue;
 
-        public Mailbox(IMediator mediator)
+        public Mailbox(IMediator mediator, CancellationToken cancellationToken)
         {
-            queue = new ActionBlock<TRequest>(async request => await mediator.Send((IRequest<ActorResult>) request));
+            queue = new ActionBlock<TRequest>(async request => await mediator.Send((IRequest<ActorResult>) request,cancellationToken));
         }
 
         public Task<bool> Send(TRequest request)
@@ -28,5 +29,10 @@ namespace Diffused.Core.Mediatr.Actor
 
             return Task.FromResult(queue.Post(request));
         }
+
+        public void Complete() => queue.Complete();
+
+        public Task Completion => queue.Completion;
+
     }
 }

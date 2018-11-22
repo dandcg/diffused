@@ -1,4 +1,5 @@
-﻿using Diffused.Core.ActorImpl;
+﻿using Diffused.Core.Handlers;
+using Diffused.Core.Mediatr.Actor;
 using Diffused.Core.NodeImpl;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,16 +14,10 @@ namespace Diffused.Core
             services.AddHostedService<NodeHostedService>();
 
             services.AddScoped<Node>();
+            services.AddScoped<ActorManager>();
 
-            services.AddMediatrScoped();
-
-            services.AddScoped<IRequestHandler<Test, Unit>, TestHandler>();
-        }
-
-        private static void AddMediatrScoped(this IServiceCollection services)
-        {
-            services.AddScoped<ServiceFactory>(p => p.GetService);
-            services.Add(new ServiceDescriptor(typeof(IMediator), typeof(Mediator), ServiceLifetime.Scoped));
+            services.AddMediatR(typeof(TestHandler));
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ActorBehaviour<,>));
         }
     }
 }

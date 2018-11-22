@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Diffused.Core.Mediatr.Actor;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace Diffused.Core.ActorImpl
+namespace Diffused.Core.Handlers
 {
-    public class TestHandler : IRequestHandler<Test>
+    public class TestHandler : IRequestHandler<Test, ActorResult>
     {
         private readonly ILogger<NodeHostedService> logger;
         private readonly IMediator mediator;
@@ -18,10 +19,10 @@ namespace Diffused.Core.ActorImpl
             this.mediator = mediator;
         }
 
-        public Task<Unit> Handle(Test request, CancellationToken cancellationToken)
+        public Task<ActorResult> Handle(Test request, CancellationToken cancellationToken)
         {
             logger.LogInformation("Test Request {NodeId} with {HandlerId}", request.NodeId, HandlerId);
-            return null;
+            return Task.FromResult(new ActorResult());
         }
     }
 }

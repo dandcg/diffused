@@ -1,9 +1,9 @@
 ﻿using System;
-using MediatR;
+using Diffused.Core.Mediatr.Actor;
 
-namespace Diffused.Core.ActorImpl
+namespace Diffused.Core.Handlers
 {
-    public class Test : IRequest
+    public class Test : ActorRequest
     {
         public Guid NodeId { get; }
 

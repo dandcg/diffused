@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using Diffused.Core.ActorImpl;
+using Diffused.Core.Handlers;
 using MediatR;
 using Microsoft.Extensions.Logging;
 

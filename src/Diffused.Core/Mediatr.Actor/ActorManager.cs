@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,42 +19,55 @@ namespace Diffused.Core.Mediatr.Actor
             this.mediator = mediator;
         }
 
-        internal ConcurrentDictionary<Type, Lazy<IMailbox>> Mailboxes { get; } = new ConcurrentDictionary<Type, Lazy<IMailbox>>();
+        internal ConcurrentDictionary<Type, Lazy<IActorController>> ActorControllers { get; } = new ConcurrentDictionary<Type, Lazy<IActorController>>();
 
         public Task<bool> Send<TRequest>(TRequest request)
         {
-            var mailboxLazy = Mailboxes.GetOrAdd(typeof(TRequest), key => new Lazy<IMailbox>(() => new Mailbox<TRequest>(mediator, cts.Token)));
+            var mailboxLazy = ActorControllers.GetOrAdd(typeof(TRequest), key => new Lazy<IActorController>(() => new ActorController<TRequest>(mediator, cts.Token)));
 
-            var mailbox = (Mailbox<TRequest>) mailboxLazy.Value;
+            var mailbox = (ActorController<TRequest>) mailboxLazy.Value;
 
             return mailbox.Send(request);
         }
 
         public Task<bool> Post<TRequest>(TRequest request)
         {
-            var mailboxLazy = Mailboxes.GetOrAdd(typeof(TRequest), key => new Lazy<IMailbox>(() => new Mailbox<TRequest>(mediator, cts.Token)));
+            var mailboxLazy = ActorControllers.GetOrAdd(typeof(TRequest), key => new Lazy<IActorController>(() => new ActorController<TRequest>(mediator, cts.Token)));
 
-            var mailbox = (Mailbox<TRequest>) mailboxLazy.Value;
+            var mailbox = (ActorController<TRequest>) mailboxLazy.Value;
 
             return mailbox.Post(request);
         }
 
-        public Task Complete(params Type[] order)
+        public async Task Finished()
         {
-            var mailboxes = order.Length == 0 ? Mailboxes.Keys : order;
-
-            foreach (var mbKey in mailboxes)
+            IEnumerable<IActorController> actors;
+            do
             {
-                if (Mailboxes.TryGetValue(mbKey, out var mailbox))
-                {
-                    mailbox.Value.Complete();
-                }
+                actors = ActorControllers.Values.Select(s => s.Value).ToList();
+                await Task.Delay(100);
+            } while (actors.Sum(s => s.InputCount) > 0);
+
+            foreach (var actor in actors)
+            {
+                actor.Complete();
             }
 
-            return Task.WhenAll(Mailboxes.Values.Select(s => s.Value.Completion).ToList());
+            await Task.WhenAll(actors.Select(s => s.Completion).ToList());
         }
 
-        public void Terminate()
+        public void Terminate(params Type[] keys)
+        {
+            foreach (var key in keys)
+            {
+                if (ActorControllers.TryGetValue(key, out var mailbox))
+                {
+                    mailbox.Value.Cancel();
+                }
+            }
+        }
+
+        public void TerminateAll()
         {
             cts.Cancel();
         }

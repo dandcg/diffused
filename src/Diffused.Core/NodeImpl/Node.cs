@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using Diffused.Core.Handlers;
 using Diffused.Core.Mediatr.Actor;
 using MediatR;
@@ -17,13 +15,6 @@ namespace Diffused.Core.NodeImpl
 
         internal Guid NodeId = Guid.NewGuid();
 
-
-
-
-        private Task _executingTask;
-        private CancellationTokenSource _cts;
-
-
         public Node(ILogger<NodeHostedService> logger, IMediator mediator, ActorManager actorManager)
         {
             this.logger = logger;
@@ -31,7 +22,7 @@ namespace Diffused.Core.NodeImpl
             this.actorManager = actorManager;
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        public async Task RunAsync()
         {
             logger.LogInformation("Node {NodeId} is starting.", NodeId);
 
@@ -40,12 +31,12 @@ namespace Diffused.Core.NodeImpl
             await mediator.Send(new Test(NodeId));
         }
 
-        public async Task StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync()
         {
             logger.LogInformation("Node {NodeId} is stopping.", NodeId);
 
-            await actorManager.Complete();
-            
+            await actorManager.Finished();
+
             logger.LogInformation("Node {NodeId} is stopped.", NodeId);
         }
     }

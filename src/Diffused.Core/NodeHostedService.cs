@@ -11,12 +11,11 @@ namespace Diffused.Core
     public class NodeHostedService : IHostedService
     {
         private readonly ILogger logger;
-
         private readonly IServiceProvider services;
-
         private Node node;
         private IServiceScope scope;
         private Task executingTask;
+        private CancellationTokenSource cts;
 
         public NodeHostedService(IServiceProvider services, ILogger<NodeHostedService> logger)
         {
@@ -24,18 +23,29 @@ namespace Diffused.Core
             this.logger = logger;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public Task StartAsync(CancellationToken cancellationToken)
         {
+            cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
             scope = services.CreateScope();
 
             node = scope.ServiceProvider.GetRequiredService<Node>();
 
-            return node.StartAsync(cancellationToken);
+            executingTask = node.RunAsync();
+
+            return executingTask.IsCompleted ? executingTask : Task.CompletedTask;
         }
 
-        public async Task StopAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
-            await node.StopAsync(cancellationToken);
+            if (executingTask == null)
+            {
+                return;
+            }
+
+            await Task.WhenAny(node.StopAsync(), Task.Delay(-1, cancellationToken));
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             scope.Dispose();
         }

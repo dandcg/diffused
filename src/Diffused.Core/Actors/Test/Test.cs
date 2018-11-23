@@ -1,7 +1,7 @@
 ﻿using System;
 using Diffused.Core.Mediatr.Actor;
 
-namespace Diffused.Core.Handlers
+namespace Diffused.Core.Actors.Test
 {
     public class Test : ActorRequest
     {

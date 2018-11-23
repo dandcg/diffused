@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Diffused.Core.Handlers;
+using Diffused.Core.Infrastructure;
 using Diffused.Core.Mediatr.Actor;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace Diffused.Core.NodeImpl
+namespace Diffused.Core.Implementations.Test
 {
-    public class Node
+    public class TestNode : INode
     {
         private readonly ILogger<NodeHostedService> logger;
         private readonly IMediator mediator;
@@ -15,7 +15,7 @@ namespace Diffused.Core.NodeImpl
 
         internal Guid NodeId = Guid.NewGuid();
 
-        public Node(ILogger<NodeHostedService> logger, IMediator mediator, ActorManager actorManager)
+        public TestNode(ILogger<NodeHostedService> logger, IMediator mediator, ActorManager actorManager)
         {
             this.logger = logger;
             this.mediator = mediator;
@@ -26,9 +26,9 @@ namespace Diffused.Core.NodeImpl
         {
             logger.LogInformation("Node {NodeId} is starting.", NodeId);
 
-            await mediator.Send(new Test(NodeId));
-            await mediator.Send(new Test(NodeId));
-            await mediator.Send(new Test(NodeId));
+            await mediator.Send(new Actors.Test.Test(NodeId));
+            await mediator.Send(new Actors.Test.Test(NodeId));
+            await mediator.Send(new Actors.Test.Test(NodeId));
         }
 
         public async Task StopAsync()

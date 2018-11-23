@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Diffused.Core.Infrastructure;
 using Diffused.Core.Mediatr.Actor;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace Diffused.Core.Handlers
+namespace Diffused.Core.Actors.Test
 {
     public class TestHandler : IRequestHandler<Test, ActorResult>
     {

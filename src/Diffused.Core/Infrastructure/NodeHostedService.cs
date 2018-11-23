@@ -1,18 +1,17 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Diffused.Core.NodeImpl;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Diffused.Core
+namespace Diffused.Core.Infrastructure
 {
     public class NodeHostedService : IHostedService
     {
         private readonly ILogger logger;
         private readonly IServiceProvider services;
-        private Node node;
+        private INode node;
         private IServiceScope scope;
         private Task executingTask;
         private CancellationTokenSource cts;
@@ -23,13 +22,15 @@ namespace Diffused.Core
             this.logger = logger;
         }
 
+        public Type NodeType { get; set; }
+
         public Task StartAsync(CancellationToken cancellationToken)
         {
             cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
             scope = services.CreateScope();
 
-            node = scope.ServiceProvider.GetRequiredService<Node>();
+            node = scope.ServiceProvider.GetRequiredService(NodeType) as INode;
 
             executingTask = node.RunAsync();
 

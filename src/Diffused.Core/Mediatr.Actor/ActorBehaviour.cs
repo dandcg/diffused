@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Diffused.Core.Infrastructure;
 using MediatR;
 using Microsoft.Extensions.Logging;
 

@@ -3,5 +3,10 @@
     <HiddenComponentWarnings>
       <Value>LongTestTimesWithoutParallelExecution</Value>
     </HiddenComponentWarnings>
+    <IgnoredTests>
+      <NamedTestSelector>
+        <TestName>Diffused.Tests.InfrastructureTests.TestNode</TestName>
+      </NamedTestSelector>
+    </IgnoredTests>
   </Settings>
 </ProjectConfiguration>

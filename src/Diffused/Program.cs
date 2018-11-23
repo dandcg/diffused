@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Diffused.Core;
+using Diffused.Core.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -30,7 +31,7 @@ namespace Diffused
                         config.AddCommandLine(args);
                     }
                 })
-                .ConfigureServices((hostContext, services) => { services.AddHostedService<NodeHostedService>(); })
+                .ConfigureServices((hostContext, services) => { services.AddNodeServices(); })
                 .UseSerilog();
 
             await builder.RunConsoleAsync();

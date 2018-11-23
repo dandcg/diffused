@@ -1,6 +1,10 @@
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Diffused.Core;
+using Diffused.Core.Implementations.GossipV1;
+using Diffused.Core.Implementations.Test;
+using Diffused.Core.Infrastructure;
 using Diffused.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -26,7 +30,7 @@ namespace Diffused.Tests
             var logger = output.SetupLogging().ForContext("SourceContext", "InfrastructureTests");
 
             services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(logger, true));
-            services.AddNodeSerivces();
+            services.AddNodeServices();
         }
 
         public T GetService<T>()
@@ -40,13 +44,39 @@ namespace Diffused.Tests
         }
 
         [Fact]
-        public async Task Test1()
+        public async Task TestNode()
         {
-            var service = GetService<IHostedService>();
+            var service = GetService<IHostedService>() as NodeHostedService;
+
+            Debug.Assert(service != null, nameof(service) + " != null");
+
+            service.NodeType = typeof(TestNode);
 
             await service.StartAsync(CancellationToken.None);
 
             await service.StopAsync(CancellationToken.None);
         }
+
+
+        [Fact]
+        public async Task GossipV1Node()
+        {
+            var service = GetService<IHostedService>() as NodeHostedService;
+            
+
+            Debug.Assert(service != null, nameof(service) + " != null");
+
+            service.NodeType = typeof(GossipV1Node);
+
+            var config = GetService<GossipV1NodeConfig>();
+
+            config.ListenAddress = new Address("A");
+
+            await service.StartAsync(CancellationToken.None);
+
+            await service.StopAsync(CancellationToken.None);
+        }
+
+
     }
 }

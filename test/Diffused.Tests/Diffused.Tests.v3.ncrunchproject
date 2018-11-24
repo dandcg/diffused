@@ -7,6 +7,9 @@
       <NamedTestSelector>
         <TestName>Diffused.Tests.InfrastructureTests.TestNode</TestName>
       </NamedTestSelector>
+      <NamedTestSelector>
+        <TestName>Diffused.Tests.Swim.SwimTests.SwimNodeTest1</TestName>
+      </NamedTestSelector>
     </IgnoredTests>
   </Settings>
 </ProjectConfiguration>

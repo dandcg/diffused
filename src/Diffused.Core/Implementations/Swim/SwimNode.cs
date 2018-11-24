@@ -496,7 +496,10 @@ namespace Diffused.Core.Implementations.Swim
         private async Task WaitForProtocolPeriod()
         {
             var syncTime = protocolPeriodMs - (int) (DateTime.Now - lastProtocolPeriod).TotalMilliseconds;
-            await Task.Delay(syncTime);
+            if (syncTime > 0)
+            {
+                await Task.Delay(syncTime);
+            }
             lastProtocolPeriod = DateTime.Now;
         }
 

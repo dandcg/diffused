@@ -29,7 +29,7 @@ namespace Diffused.Core.Infrastructure
         {
             if (!Connections.TryGetValue(address.Value, out var peer))
             {
-                return null;
+                return Task.FromResult((ITransport)null);
             }
 
             return Task.FromResult(peer);

@@ -40,12 +40,15 @@ namespace Diffused.Tests.Swim
         [Fact]
         public async Task SwimNodeTest1()
         {
-            var nodeCollection = NodeCollection.Create(nodeFactory, 5);
 
-            nodeCollection[1].SeedMembers = new[] {nodeCollection[0].Self.Address};
-            nodeCollection[2].SeedMembers = new[] {nodeCollection[1].Self.Address};
-            nodeCollection[3].SeedMembers = new[] {nodeCollection[2].Self.Address};
-            nodeCollection[4].SeedMembers = new[] {nodeCollection[3].Self.Address};
+            var n =10;
+
+            var nodeCollection = NodeCollection.Create(nodeFactory, n);
+
+            for (int j = 1; j < n; j++)
+            {
+                nodeCollection[j].SeedMembers = new[] {nodeCollection[j-1].Self.Address};
+            }
 
             await nodeCollection.StartAllAsync();
 
@@ -54,10 +57,49 @@ namespace Diffused.Tests.Swim
             {
                 i = (int) nodeCollection.Average(s => s.Members.Count);
                 await Task.Delay(100);
-            } while (i < 4);
+            } while (i < n-1);
+
+            
 
             await nodeCollection.StopAllAsync();
         }
+
+        
+        [Fact]
+        public async Task SwimNodeTest2()
+        {
+
+            var n= 5;
+
+            var nodeCollection = NodeCollection.Create(nodeFactory, n);
+
+            for (int j = 1; j < n; j++)
+            {
+                nodeCollection[j].SeedMembers = new[] {nodeCollection[j-1].Self.Address};
+            }
+
+            await nodeCollection.StartAllAsync();
+
+           
+            int i = 0;
+            do
+            {
+                i = (int) nodeCollection.Average(s => s.Members.Count);
+                await Task.Delay(100);
+            } while (i < n-1);
+
+            await nodeCollection[0].StopAsync();
+            // i = 0;
+            //do
+            //{
+            //    i = (int) nodeCollection.Where()Average(s => s.Members.Count);
+            //    await Task.Delay(100);
+            //} while (i < n-1);
+            await Task.Delay(1000);
+
+            await nodeCollection.StopAllAsync();
+        }
+
 
         public void Dispose()
         {

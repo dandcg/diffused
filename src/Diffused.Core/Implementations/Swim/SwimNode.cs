@@ -271,7 +271,7 @@ namespace Diffused.Core.Implementations.Swim
         {
             foreach (var indirectEndpoint in indirectAddresses)
             {
-                logger.LogDebug("GossipV1 sending PingRequest to {destinationAddress} via {indirectEndpoint}", destinationGossipAddress, indirectEndpoint);
+                logger.LogDebug("{LocalAddress} sending PingRequest to {destinationAddress} via {indirectEndpoint}", Self.Address, destinationGossipAddress, indirectEndpoint);
 
                 var pingRequest = new PingRequest {DestinationAddress = destinationGossipAddress, SourceAddress = Self.Address};
                 WriteMembers(pingRequest, membersList);
@@ -282,7 +282,7 @@ namespace Diffused.Core.Implementations.Swim
 
         private async Task PingRequestForwardAsync(Address destinationAddress, Address sourceAddress, Message message)
         {
-            logger.LogDebug("GossipV1 forwarding PingRequest to {destinationAddress} from {sourceAddress}", destinationAddress, sourceAddress);
+            logger.LogDebug("{LocalAddress} forwarding PingRequest to {destinationAddress} from {sourceAddress}", Self.Address, destinationAddress, sourceAddress);
             await transport.SendAsync(destinationAddress, message);
         }
 
@@ -298,7 +298,7 @@ namespace Diffused.Core.Implementations.Swim
 
         private async Task AckRequestAsync(Address destinationAddress, Address indirectEndPoint, Member[] membersList)
         {
-            logger.LogDebug("GossipV1 sending AckRequest to {destinationAddress} via {indirectEndPoint}", destinationAddress, indirectEndPoint);
+            logger.LogDebug("{LocalAddress} sending AckRequest to {destinationAddress} via {indirectEndPoint}", Self.Address, destinationAddress, indirectEndPoint);
 
             var ackRequest = new AckRequest {DestinationAddress = destinationAddress, SourceAddress = Self.Address};
             WriteMembers(ackRequest, membersList);
@@ -308,7 +308,7 @@ namespace Diffused.Core.Implementations.Swim
 
         private async Task AckRequestForwardAsync(Address destinationAddress, Address sourceAddress, Message message)
         {
-            logger.LogDebug("GossipV1 forwarding AckRequest to {destinationAddress} from {sourceAddress}", destinationAddress, sourceAddress);
+            logger.LogDebug("{LocalAddress} forwarding AckRequest to {destinationAddress} from {sourceAddress}", Self.Address, destinationAddress, sourceAddress);
 
             await transport.SendAsync(destinationAddress, message);
         }
@@ -336,7 +336,7 @@ namespace Diffused.Core.Implementations.Swim
 
                             member.Update(memberState, generation, service, servicePort);
 
-                            logger.LogInformation("GossipV1 member state changed {member}", member);
+                            logger.LogInformation("{LocalAddress} member state changed {member}", Self.Address, member);
                         }
 
                         else if (member == null)
@@ -425,7 +425,7 @@ namespace Diffused.Core.Implementations.Swim
                 if (members.TryGetValue(address, out var member) && member.State == MemberState.Alive)
                 {
                     member.Update(MemberState.Suspicious);
-                    logger.LogInformation("GossipV1 suspicious member {member}", member);
+                    logger.LogInformation("{LocalAddress} suspicious member {member}", Self.Address, member);
                 }
             }
         }
@@ -441,11 +441,11 @@ namespace Diffused.Core.Implementations.Swim
                     {
                         lock (memberLocker)
                         {
-                            if (members.TryGetValue(awaitingAck.Key, out var member) && (member.State == MemberState.Alive || member.State == MemberState.Suspicious))
+                            if (members.TryGetValue(awaitingAck.Key, out var member) && member.State == MemberState.Alive || member.State == MemberState.Suspicious)
                             {
                                 member.Update(MemberState.Dead);
                                 awaitingAcks.Remove(awaitingAck.Key);
-                                logger.LogInformation("GossipV1 dead member {member}", member);
+                                logger.LogInformation("{LocalAddress} dead member {member}", Self.Address, member);
                             }
                         }
                     }
@@ -500,6 +500,7 @@ namespace Diffused.Core.Implementations.Swim
             {
                 await Task.Delay(syncTime);
             }
+
             lastProtocolPeriod = DateTime.Now;
         }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Diffused.Core.Implementations.Swim.Model;
 using Diffused.Core.Infrastructure;
 using Diffused.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
@@ -89,12 +90,12 @@ namespace Diffused.Tests.Swim
             } while (i < n-1);
 
             await nodeCollection[0].StopAsync();
-            // i = 0;
-            //do
-            //{
-            //    i = (int) nodeCollection.Where()Average(s => s.Members.Count);
-            //    await Task.Delay(100);
-            //} while (i < n-1);
+            i = 0;
+            do
+            {
+                i = (int) nodeCollection.SelectMany(s => s.Members).Count(w => w.State == MemberState.Dead);
+            } while (i !=4);
+
             await Task.Delay(1000);
 
             await nodeCollection.StopAllAsync();

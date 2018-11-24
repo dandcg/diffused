@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Diffused.Core.Infrastructure;
 using Diffused.Tests.Helpers;
@@ -37,15 +38,24 @@ namespace Diffused.Tests.Swim
         }
 
         [Fact]
-        public async Task GossipV1Node()
+        public async Task SwimNodeTest1()
         {
-            var nodeCollection = NodeCollection.Create(nodeFactory, 2);
+            var nodeCollection = NodeCollection.Create(nodeFactory, 5);
 
             nodeCollection[1].SeedMembers = new[] {nodeCollection[0].Self.Address};
-            //nodeCollection[2].SeedMembers = new[] {nodeCollection[1].Self.Address};
+            nodeCollection[2].SeedMembers = new[] {nodeCollection[1].Self.Address};
+            nodeCollection[3].SeedMembers = new[] {nodeCollection[2].Self.Address};
+            nodeCollection[4].SeedMembers = new[] {nodeCollection[3].Self.Address};
 
             await nodeCollection.StartAllAsync();
-            await Task.Delay(1000);
+
+            int i = 0;
+            do
+            {
+                i = (int) nodeCollection.Average(s => s.Members.Count);
+                await Task.Delay(100);
+            } while (i < 4);
+
             await nodeCollection.StopAllAsync();
         }
 

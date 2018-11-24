@@ -39,10 +39,10 @@ namespace Diffused.Tests.Swim
         [Fact]
         public async Task GossipV1Node()
         {
-            var nodeCollection = NodeCollection.Create(nodeFactory, 3);
+            var nodeCollection = NodeCollection.Create(nodeFactory, 2);
 
             nodeCollection[1].SeedMembers = new[] {nodeCollection[0].Self.Address};
-            nodeCollection[2].SeedMembers = new[] {nodeCollection[1].Self.Address};
+            //nodeCollection[2].SeedMembers = new[] {nodeCollection[1].Self.Address};
 
             await nodeCollection.StartAllAsync();
             await Task.Delay(1000);

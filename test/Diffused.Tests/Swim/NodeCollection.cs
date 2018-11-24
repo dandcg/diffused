@@ -13,7 +13,7 @@ namespace Diffused.Tests.Swim
 
             for (int i = 0; i < n; i++)
             {
-                var node = nf.CreateSwimNode(new SwimNodeConfig {ListenAddress = new Address($"Node[{i + 1}]")}) as SwimNode;
+                var node = nf.CreateSwimNode(new SwimNodeConfig {ListenAddress = new Address($"node{i + 1}")}) as SwimNode;
                 nodeCollection.Add(node);
             }
 

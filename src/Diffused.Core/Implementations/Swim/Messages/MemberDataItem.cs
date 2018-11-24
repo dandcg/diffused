@@ -3,7 +3,7 @@ using Diffused.Core.Infrastructure;
 
 namespace Diffused.Core.Implementations.Swim.Messages
 {
-    public class MemberData
+    public class MemberDataItem
     {
         public MemberState State { get; set; }
         public Address Address { get; set; }

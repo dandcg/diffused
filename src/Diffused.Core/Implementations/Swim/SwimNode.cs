@@ -60,7 +60,7 @@ namespace Diffused.Core.Implementations.Swim
         {
             transport = await transportFactory.Create(Self.Address);
 
-            logger.LogInformation("Node {LocalAddress} starting", Self.Address);
+            logger.LogInformation("{LocalAddress} starting", Self.Address);
 
             bootstrapping = SeedMembers != null && SeedMembers.Length > 0;
 
@@ -77,7 +77,7 @@ namespace Diffused.Core.Implementations.Swim
         {
             if (bootstrapping)
             {
-                logger.LogInformation("Node {LocalAddress} bootstrapping off seeds", Self.Address);
+                logger.LogInformation("{LocalAddress} bootstrapping off seeds", Self.Address);
 
                 while (bootstrapping && !cancellationToken.IsCancellationRequested)
                 {
@@ -87,11 +87,14 @@ namespace Diffused.Core.Implementations.Swim
 
                     await Task.Delay(protocolPeriodMs, cancellationToken);
                 }
+
+                logger.LogInformation("{LocalAddress} finished bootstrapping", Self.Address);
+
             }
 
             else
             {
-                logger.LogInformation("Node {LocalAddress} no seeds to bootstrap off", Self.Address);
+                logger.LogInformation("{LocalAddress} no seeds to bootstrap off", Self.Address);
             }
         }
 
@@ -110,7 +113,7 @@ namespace Diffused.Core.Implementations.Swim
                     if (bootstrapping)
                     {
                         bootstrapping = false;
-                        logger.LogInformation("GossipV1 finished bootstrapping");
+                       
                     }
 
                     Address destinationAddress = null;
@@ -133,7 +136,7 @@ namespace Diffused.Core.Implementations.Swim
                         sourceAddress = ackRequest.SourceAddress;
                     }
 
-                    if (message is GossipV1Message gmessage)
+                    if (message is IMemberData gmessage)
                     {
                         UpdateMembers(gmessage);
                         await RequestHandler(request, message, sourceAddress, destinationAddress, GetMembers());
@@ -198,7 +201,7 @@ namespace Diffused.Core.Implementations.Swim
         {
             if (message is Ping)
             {
-                await AckAsync(sourceAddress, membersList).ConfigureAwait(false);
+                await AckAsync(sourceAddress, membersList);
             }
 
             else if (message is Ack)
@@ -239,15 +242,20 @@ namespace Diffused.Core.Implementations.Swim
 
         public async Task PingAsync(Address destinationAddress, Member[] membersList = null)
         {
-            logger.LogDebug("Node {LocalAddress} sending Ping to {destinationAddress}", Self.Address, destinationAddress);
-            var ping = new Ping {MemberData = membersList.ToWire()};
+            logger.LogDebug("{LocalAddress} sending Ping to {destinationAddress}", Self.Address, destinationAddress);
+           
+            var ping = new Ping( );
+            WriteMembers(ping, membersList);
+
             var result = await transport.SendAsync(destinationAddress, ping);
 
             if (result.Result != MessageSendResultType.OneWay)
             {
-                logger.LogWarning("Node {LocalAddress} sent Ping to {destinationAddress}: Result = {SendResult}", Self.Address, destinationAddress, result.Result.ToString());
+                logger.LogWarning("{LocalAddress} sent Ping to {destinationAddress}: Result = {SendResult}", Self.Address, destinationAddress, result.Result.ToString());
             }
         }
+
+    
 
         private async Task PingRequestAsync(Address destinationGossipAddress, IEnumerable<Address> indirectAddresses, Member[] membersList = null)
         {
@@ -255,7 +263,10 @@ namespace Diffused.Core.Implementations.Swim
             {
                 logger.LogDebug("GossipV1 sending PingRequest to {destinationAddress} via {indirectEndpoint}", destinationGossipAddress, indirectEndpoint);
 
-                await transport.SendAsync(indirectEndpoint, new PingRequest {DestinationAddress = destinationGossipAddress, SourceAddress = Self.Address, MemberData = membersList.ToWire()});
+                var pingRequest = new PingRequest {DestinationAddress = destinationGossipAddress, SourceAddress = Self.Address};
+                WriteMembers(pingRequest, membersList);
+
+                await transport.SendAsync(indirectEndpoint,pingRequest);
             }
         }
 
@@ -267,23 +278,32 @@ namespace Diffused.Core.Implementations.Swim
 
         private async Task AckAsync(Address destinationAddress, Member[] membersList)
         {
-            logger.LogDebug("GossipV1 sending Ack to {destinationAddress}", destinationAddress);
-            await transport.SendAsync(destinationAddress, new Ack {MemberData = membersList.ToWire()});
+            logger.LogDebug("{LocalAddress} sending Ack to {destinationAddress}", Self.Address,destinationAddress);
+
+            var ack = new Ack ();
+            WriteMembers(ack, membersList);
+
+            await transport.SendAsync(destinationAddress, ack);
         }
 
         private async Task AckRequestAsync(Address destinationAddress, Address indirectEndPoint, Member[] membersList)
         {
             logger.LogDebug("GossipV1 sending AckRequest to {destinationAddress} via {indirectEndPoint}", destinationAddress, indirectEndPoint);
-            await transport.SendAsync(indirectEndPoint, new AckRequest {DestinationAddress = destinationAddress, SourceAddress = Self.Address, MemberData = membersList.ToWire()});
+
+            var ackRequest = new AckRequest {DestinationAddress = destinationAddress, SourceAddress = Self.Address};
+            WriteMembers(ackRequest , membersList);
+
+            await transport.SendAsync(indirectEndPoint, ackRequest);
         }
 
         private async Task AckRequestForwardAsync(Address destinationAddress, Address sourceAddress, Message message)
         {
             logger.LogDebug("GossipV1 forwarding AckRequest to {destinationAddress} from {sourceAddress}", destinationAddress, sourceAddress);
+
             await transport.SendAsync(destinationAddress, message);
         }
 
-        private void UpdateMembers(GossipV1Message message)
+        private void UpdateMembers(IMemberData message)
         {
             foreach (var m in message.MemberData)
             {
@@ -333,6 +353,29 @@ namespace Diffused.Core.Implementations.Swim
                 }
             }
         }
+
+        public void  WriteMembers( IMemberData memberdataMessage, Member[] membersList)
+        {
+            List<MemberDataItem> list = new List<MemberDataItem>();
+
+            var totalMembers = new List<Member> {Self};
+            
+            if (membersList!=null) {totalMembers.AddRange(membersList);}
+         
+            // TODO - don't just iterate over the members, optmise make intelligent
+
+            list.AddRange(totalMembers.Select(m => new MemberDataItem
+            {
+                State = m.State,
+                Address = m.Address,
+                Generation = m.Generation,
+                Service = m.Service,
+                ServicePort = m.ServicePort
+            }));
+
+            memberdataMessage.MemberData= list.ToArray();
+        }
+
 
         private Member[] GetMembers()
         {
@@ -441,7 +484,7 @@ namespace Diffused.Core.Implementations.Swim
         private async Task WaitForProtocolPeriod()
         {
             var syncTime = protocolPeriodMs - (int) (DateTime.Now - lastProtocolPeriod).TotalMilliseconds;
-            await Task.Delay(syncTime).ConfigureAwait(false);
+            await Task.Delay(syncTime);
             lastProtocolPeriod = DateTime.Now;
         }
 

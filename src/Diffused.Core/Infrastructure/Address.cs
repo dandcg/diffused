@@ -11,7 +11,7 @@
 
         public override string ToString()
         {
-            return $"InMem:{Value}";
+            return $"inmem:{Value}";
         }
     }
 }

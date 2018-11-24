@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Diffused.Core.Implementations.Test
 {
-    public class TestNode : INode
+    public class TestNode : Node
     {
         private readonly ILogger<NodeHostedService> logger;
         private readonly IMediator mediator;
@@ -22,7 +22,7 @@ namespace Diffused.Core.Implementations.Test
             this.actorManager = actorManager;
         }
 
-        public async Task RunAsync()
+        protected override async Task RunAsync()
         {
             logger.LogInformation("Node {NodeId} is starting.", NodeId);
 
@@ -31,7 +31,7 @@ namespace Diffused.Core.Implementations.Test
             await mediator.Send(new Actors.Test.Test(NodeId));
         }
 
-        public async Task StopAsync()
+        public override async Task StopAsync()
         {
             logger.LogInformation("Node {NodeId} is stopping.", NodeId);
 

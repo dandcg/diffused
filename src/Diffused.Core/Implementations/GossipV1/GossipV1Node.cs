@@ -11,49 +11,55 @@ using Microsoft.Extensions.Logging;
 
 namespace Diffused.Core.Implementations.GossipV1
 {
-    public class GossipV1Node : INode
+    public class GossipV1Node : Node
     {
-        private readonly Member self;
-        public int ProtocolPeriodMs;
-        private readonly int ackTimeoutMs;
-        private readonly int numberOfIndirectEndpoints;
-        public Address[] SeedMembers;
+        private Member self;
+        private int protocolPeriodMs;
+        private int ackTimeoutMs;
+        private int numberOfIndirectEndpoints;
+        private  Address[] seedMembers;
         internal volatile bool Bootstrapping;
         private readonly object memberLocker = new object();
         private readonly Dictionary<Address, Member> members = new Dictionary<Address, Member>();
         private readonly object awaitingAcksLock = new object();
         private volatile Dictionary<Address, DateTime> awaitingAcks = new Dictionary<Address, DateTime>();
         private DateTime lastProtocolPeriod = DateTime.Now;
-        public readonly Random Rand = new Random();
+        private readonly Random rand = new Random();
         private readonly ILogger logger;
         private readonly IMediator mediator;
         private readonly ITransportFactory transportFactory;
         private ITransport transport;
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
+        private Task executingTask;
 
-        public GossipV1Node(ILogger<GossipV1Node> logger, IMediator mediator, GossipV1NodeConfig options, ITransportFactory transportFactory)
+        public GossipV1Node(ILogger<GossipV1Node> logger, IMediator mediator,  ITransportFactory transportFactory)
         {
             this.logger = logger;
             this.mediator = mediator;
             this.transportFactory = transportFactory;
 
-            ProtocolPeriodMs = options.ProtocolPeriodMilliseconds;
-            ackTimeoutMs = options.AckTimeoutMilliseconds;
-            numberOfIndirectEndpoints = options.NumberOfIndirectEndpoints;
-            SeedMembers = options.SeedMembers;
-            Bootstrapping = options.SeedMembers != null && options.SeedMembers.Length > 0;
+        }
+
+        public void Configure(GossipV1NodeConfig config)
+        {
+        
+            protocolPeriodMs = config.ProtocolPeriodMilliseconds;
+            ackTimeoutMs = config.AckTimeoutMilliseconds;
+            numberOfIndirectEndpoints = config.NumberOfIndirectEndpoints;
+            seedMembers = config.SeedMembers;
+            Bootstrapping = config.SeedMembers != null && config.SeedMembers.Length > 0;
 
             self = new Member
             {
                 State = MemberState.Alive,
-                Address = options.ListenAddress,
+                Address = config.ListenAddress,
                 Generation = 1,
-                Service = options.Service,
-                ServicePort = options.ServicePort
+                Service = config.Service,
+                ServicePort = config.ServicePort
             };
         }
 
-        public async Task RunAsync()
+        protected override async Task RunAsync()
         {
             transport = await transportFactory.Create(null);
 
@@ -76,11 +82,11 @@ namespace Diffused.Core.Implementations.GossipV1
 
                 while (Bootstrapping && !cancellationToken.IsCancellationRequested)
                 {
-                    var i = Rand.Next(0, SeedMembers.Length);
+                    var i = rand.Next(0, seedMembers.Length);
 
-                    await PingAsync(SeedMembers[i]);
+                    await PingAsync(seedMembers[i]);
 
-                    await Task.Delay(ProtocolPeriodMs, cancellationToken);
+                    await Task.Delay(protocolPeriodMs, cancellationToken);
                 }
             }
 
@@ -153,7 +159,7 @@ namespace Diffused.Core.Implementations.GossipV1
                     // ping member
                     if (membersList.Length > 0)
                     {
-                        var i = Rand.Next(0, membersList.Length);
+                        var i = rand.Next(0, membersList.Length);
                         var member = membersList[i];
 
                         AddAwaitingAck(member.Address);
@@ -341,7 +347,7 @@ namespace Diffused.Core.Implementations.GossipV1
                 return Enumerable.Empty<Address>();
             }
 
-            var randomIndex = Rand.Next(0, membersList.Length);
+            var randomIndex = rand.Next(0, membersList.Length);
 
             return Enumerable.Range(randomIndex, numberOfIndirectEndpoints + 1)
                 .Select(ri => ri % membersList.Length) // wrap the range around to 0 if we hit the end
@@ -395,7 +401,7 @@ namespace Diffused.Core.Implementations.GossipV1
             {
                 if (!awaitingAcks.ContainsKey(address))
                 {
-                    awaitingAcks.Add(address, DateTime.Now.AddMilliseconds(ProtocolPeriodMs * 5));
+                    awaitingAcks.Add(address, DateTime.Now.AddMilliseconds(protocolPeriodMs * 5));
                 }
             }
         }
@@ -429,16 +435,24 @@ namespace Diffused.Core.Implementations.GossipV1
 
         private async Task WaitForProtocolPeriod()
         {
-            var syncTime = ProtocolPeriodMs - (int) (DateTime.Now - lastProtocolPeriod).TotalMilliseconds;
+            var syncTime = protocolPeriodMs - (int) (DateTime.Now - lastProtocolPeriod).TotalMilliseconds;
             await Task.Delay(syncTime).ConfigureAwait(false);
             lastProtocolPeriod = DateTime.Now;
         }
 
-        public async Task StopAsync()
+        public override async Task StopAsync()
         {
+
+            if (executingTask == null)
+            {
+                return;
+            }
+
             cts.Cancel();
 
             await transport.DisconnectAsync();
         }
+
+   
     }
 }

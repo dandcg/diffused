@@ -1,54 +1,40 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Diffused.Core.Infrastructure
 {
-    public class NodeHostedService : IHostedService
+    public class NodeHostedService : IHostedService, IDisposable
     {
         private readonly ILogger logger;
-        private readonly IServiceProvider services;
+        private readonly NodeFactory nodeFactory;
         private INode node;
-        private IServiceScope scope;
-        private Task executingTask;
         private CancellationTokenSource cts;
 
-        public NodeHostedService(IServiceProvider services, ILogger<NodeHostedService> logger)
+        public NodeHostedService(ILogger<NodeHostedService> logger, NodeFactory nodeFactory)
         {
-            this.services = services;
             this.logger = logger;
+            this.nodeFactory = nodeFactory;
         }
-
-        public Type NodeType { get; set; }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
             cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-
-            scope = services.CreateScope();
-
-            node = scope.ServiceProvider.GetRequiredService(NodeType) as INode;
-
-            executingTask = node.RunAsync();
-
-            return executingTask.IsCompleted ? executingTask : Task.CompletedTask;
+            node = nodeFactory.CreateTestNode();
+            return node.StartAsync();
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            if (executingTask == null)
-            {
-                return;
-            }
-
             await Task.WhenAny(node.StopAsync(), Task.Delay(-1, cancellationToken));
-
             cancellationToken.ThrowIfCancellationRequested();
+        }
 
-            scope.Dispose();
+        public void Dispose()
+        {
+            nodeFactory?.Dispose();
         }
     }
 }

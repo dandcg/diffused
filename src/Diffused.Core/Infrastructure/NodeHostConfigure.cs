@@ -12,18 +12,20 @@ namespace Diffused.Core.Infrastructure
         public static void AddNodeServices(this IServiceCollection services)
 
         {
-            services.AddHostedService<NodeHostedService>();
+   
 
             services.AddScoped<ActorManager>();
-
             services.AddMediatR(typeof(TestHandler));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ActorBehaviour<,>));
 
+            services.AddHostedService<NodeHostedService>();
+            services.AddTransient<NodeFactory>();
+
             services.AddScoped<TestNode>();
             services.AddScoped<GossipV1Node>();
-            services.AddScoped<GossipV1NodeConfig>();
 
             services.AddScoped<ITransportFactory, TransportFactory>();
+
             services.AddSingleton<InMemRouter>();
         }
     }

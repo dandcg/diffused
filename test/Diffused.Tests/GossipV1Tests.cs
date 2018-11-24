@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,52 +15,50 @@ using Xunit.Abstractions;
 
 namespace Diffused.Tests
 {
-    public class InfrastructureTests
+    public class GossipV1Tests:IDisposable
     {
         private readonly ServiceCollection services;
-        private ServiceProvider serviceProvider;
+        private readonly ServiceProvider serviceProvider;
+        private readonly NodeFactory nodeFactory;
 
-        public InfrastructureTests(ITestOutputHelper output)
+        public GossipV1Tests(ITestOutputHelper output)
         {
-            // services
 
             services = new ServiceCollection();
 
             // logging
 
             var logger = output.SetupLogging().ForContext("SourceContext", "InfrastructureTests");
-
             services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(logger, true));
+            
+            // services
+
             services.AddNodeServices();
+            serviceProvider = services.BuildServiceProvider();
+            nodeFactory = serviceProvider.GetService<NodeFactory>();
         }
 
         public T GetService<T>()
         {
-            if (serviceProvider == null)
-            {
-                serviceProvider = services.BuildServiceProvider();
-            }
-
             return serviceProvider.GetService<T>();
         }
 
         
-
-
         [Fact]
-        public async Task TestNode()
+        public async Task GossipV1Node()
         {
-            var service = GetService<IHostedService>() as NodeHostedService;
+            var node1 = nodeFactory.CreateGossipV1(new GossipV1NodeConfig());
 
-            Debug.Assert(service != null, nameof(service) + " != null");
+            await node1.StartAsync();
 
-            await service.StartAsync(CancellationToken.None);
+            await node1.StopAsync();
 
-            await service.StopAsync(CancellationToken.None);
         }
 
-
-
-
+        public void Dispose()
+        {
+            serviceProvider?.Dispose();
+            nodeFactory?.Dispose();
+        }
     }
 }

@@ -4,7 +4,7 @@ namespace Diffused.Core.Infrastructure
 {
     public interface INode
     {
-        Task RunAsync();
+        Task StartAsync();
         Task StopAsync();
     }
 }

@@ -1,9 +1,6 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Diffused.Core;
-using Diffused.Core.Implementations.GossipV1;
-using Diffused.Core.Implementations.Test;
 using Diffused.Core.Infrastructure;
 using Diffused.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,9 +40,6 @@ namespace Diffused.Tests
             return serviceProvider.GetService<T>();
         }
 
-        
-
-
         [Fact]
         public async Task TestNode()
         {
@@ -57,9 +51,5 @@ namespace Diffused.Tests
 
             await service.StopAsync(CancellationToken.None);
         }
-
-
-
-
     }
 }

@@ -10,11 +10,6 @@ namespace Diffused.Core.Infrastructure
 
         public InMemRouterTransport(InMemRouter router, Address address, bool oneWay)
         {
-            if (address == null)
-            {
-                address = new Address(GenerateUuid());
-            }
-
             Consumer = new BufferBlock<MessageContainer>();
             Address = address;
             OneWay = oneWay;
@@ -40,13 +35,15 @@ namespace Diffused.Core.Infrastructure
 
         public async Task<MessageSendResult> SendAsync(Address address, Message message, TimeSpan? timeout = null)
         {
+
+
             var peer = await Router.GetPeer(address);
 
             if (peer == null)
             {
                 return new MessageSendResult(null, MessageSendResultType.NotFound);
             }
-
+            
             var messageContainer = new MessageContainer(message, Address, OneWay);
 
             await ((InMemRouterTransport) peer).Consumer.SendAsync(messageContainer);

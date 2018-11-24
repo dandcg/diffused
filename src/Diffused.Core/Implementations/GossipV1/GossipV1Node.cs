@@ -13,7 +13,7 @@ namespace Diffused.Core.Implementations.GossipV1
 {
     public class GossipV1Node : Node
     {
-        private Member self;
+        public Member Self { get; private set; }
         private int protocolPeriodMs;
         private int ackTimeoutMs;
         private int numberOfIndirectEndpoints;
@@ -30,7 +30,7 @@ namespace Diffused.Core.Implementations.GossipV1
         private readonly ITransportFactory transportFactory;
         private ITransport transport;
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
-        private Task executingTask;
+
 
         public GossipV1Node(ILogger<GossipV1Node> logger, IMediator mediator,  ITransportFactory transportFactory)
         {
@@ -42,14 +42,14 @@ namespace Diffused.Core.Implementations.GossipV1
 
         public void Configure(GossipV1NodeConfig config)
         {
-        
+
             protocolPeriodMs = config.ProtocolPeriodMilliseconds;
             ackTimeoutMs = config.AckTimeoutMilliseconds;
             numberOfIndirectEndpoints = config.NumberOfIndirectEndpoints;
             seedMembers = config.SeedMembers;
             Bootstrapping = config.SeedMembers != null && config.SeedMembers.Length > 0;
 
-            self = new Member
+            Self = new Member
             {
                 State = MemberState.Alive,
                 Address = config.ListenAddress,
@@ -61,15 +61,15 @@ namespace Diffused.Core.Implementations.GossipV1
 
         protected override async Task RunAsync()
         {
-            transport = await transportFactory.Create(null);
+            transport = await transportFactory.Create(Self.Address);
 
-            logger.LogInformation("Starting GossipV1 on {LocalAddress}", self.Address);
+            logger.LogInformation("Node {LocalAddress} starting", Self.Address);
 
-            var bootstrapper = Bootstraper(cts.Token);
+            var bootstrapper = Task.Run(()=> Bootstraper(cts.Token), cts.Token);
 
-            var listener = Listener(cts.Token);
+            var listener = Task.Run(()=>Listener(cts.Token), cts.Token);
 
-            var gossiper = Gossiper(cts.Token);
+            var gossiper =Task.Run(()=> Gossiper(cts.Token), cts.Token);
 
             await Task.WhenAll(bootstrapper, listener, gossiper);
         }
@@ -78,7 +78,7 @@ namespace Diffused.Core.Implementations.GossipV1
         {
             if (Bootstrapping)
             {
-                logger.LogInformation("GossipV1 bootstrapping off seeds");
+                logger.LogInformation("Node {LocalAddress} bootstrapping off seeds", Self.Address);
 
                 while (Bootstrapping && !cancellationToken.IsCancellationRequested)
                 {
@@ -92,7 +92,7 @@ namespace Diffused.Core.Implementations.GossipV1
 
             else
             {
-                logger.LogInformation("GossipV1 no seeds to bootstrap off");
+                logger.LogInformation("Node {LocalAddress} no seeds to bootstrap off", Self.Address);
             }
         }
 
@@ -106,7 +106,7 @@ namespace Diffused.Core.Implementations.GossipV1
 
                     var message = request.Message;
 
-                    logger.LogDebug("GossipV1 received {MessageType} from {RemoteEndPoint}", message.GetType().Name, request.RemoteAddress);
+                    logger.LogDebug("{LocalAddress} received {MessageType} from {RemoteEndPoint}",Self.Address, message.GetType().Name, request.RemoteAddress);
 
                     if (Bootstrapping)
                     {
@@ -120,7 +120,7 @@ namespace Diffused.Core.Implementations.GossipV1
                     if (message is Ping || message is Ack)
                     {
                         sourceAddress = request.RemoteAddress;
-                        destinationAddress = self.Address;
+                        destinationAddress = Self.Address;
                     }
 
                     else if (message is PingRequest pingRequest)
@@ -210,7 +210,7 @@ namespace Diffused.Core.Implementations.GossipV1
             else if (message is PingRequest)
             {
                 // if we are the destination send an ack request
-                if (EndPointsMatch(destinationAddress, self.Address))
+                if (EndPointsMatch(destinationAddress, Self.Address))
                 {
                     await AckRequestAsync(sourceAddress, request.RemoteAddress, membersList);
                 }
@@ -225,7 +225,7 @@ namespace Diffused.Core.Implementations.GossipV1
             else if (message is AckRequest)
             {
                 // if we are the destination clear awaiting ack
-                if (EndPointsMatch(destinationAddress, self.Address))
+                if (EndPointsMatch(destinationAddress, Self.Address))
                 {
                     RemoveAwaitingAck(sourceAddress);
                 }
@@ -240,8 +240,14 @@ namespace Diffused.Core.Implementations.GossipV1
 
         public async Task PingAsync(Address destinationAddress, Member[] membersList = null)
         {
-            logger.LogDebug("GossipV1 sending Ping to {destinationAddress}", destinationAddress);
-            await transport.SendAsync(destinationAddress, new Ping {MemberData = membersList.ToWire()});
+            logger.LogDebug("Node {LocalAddress} sending Ping to {destinationAddress}", Self.Address, destinationAddress);
+            var ping = new Ping {MemberData = membersList.ToWire()};
+            var result = await transport.SendAsync(destinationAddress, ping);
+
+            if (result.Result != MessageSendResultType.OneWay)
+            {
+                logger.LogWarning("Node {LocalAddress} sent Ping to {destinationAddress}: Result = {SendResult}", Self.Address, destinationAddress, result.Result.ToString());
+            }
         }
 
         private async Task PingRequestAsync(Address destinationGossipAddress, IEnumerable<Address> indirectAddresses, Member[] membersList = null)
@@ -250,7 +256,7 @@ namespace Diffused.Core.Implementations.GossipV1
             {
                 logger.LogDebug("GossipV1 sending PingRequest to {destinationAddress} via {indirectEndpoint}", destinationGossipAddress, indirectEndpoint);
 
-                await transport.SendAsync(indirectEndpoint, new PingRequest {DestinationAddress = destinationGossipAddress, SourceAddress = self.Address, MemberData = membersList.ToWire()});
+                await transport.SendAsync(indirectEndpoint, new PingRequest {DestinationAddress = destinationGossipAddress, SourceAddress = Self.Address, MemberData = membersList.ToWire()});
             }
         }
 
@@ -269,7 +275,7 @@ namespace Diffused.Core.Implementations.GossipV1
         private async Task AckRequestAsync(Address destinationAddress, Address indirectEndPoint, Member[] membersList)
         {
             logger.LogDebug("GossipV1 sending AckRequest to {destinationAddress} via {indirectEndPoint}", destinationAddress, indirectEndPoint);
-            await transport.SendAsync(indirectEndPoint, new AckRequest {DestinationAddress = destinationAddress, SourceAddress = self.Address, MemberData = membersList.ToWire()});
+            await transport.SendAsync(indirectEndPoint, new AckRequest {DestinationAddress = destinationAddress, SourceAddress = Self.Address, MemberData = membersList.ToWire()});
         }
 
         private async Task AckRequestForwardAsync(Address destinationAddress, Address sourceAddress, Message message)
@@ -289,7 +295,7 @@ namespace Diffused.Core.Implementations.GossipV1
                 ushort servicePort = memberState == MemberState.Alive ? m.ServicePort : (ushort) 0;
 
                 // we don't add ourselves to the member list
-                if (!EndPointsMatch(address, self.Address))
+                if (!EndPointsMatch(address, Self.Address))
                 {
                     lock (memberLocker)
                     {
@@ -322,9 +328,9 @@ namespace Diffused.Core.Implementations.GossipV1
                 }
 
                 // handle any state claims about ourselves
-                else if (self.IsLaterGeneration(generation) || memberState != MemberState.Alive && generation == self.Generation)
+                else if (Self.IsLaterGeneration(generation) || memberState != MemberState.Alive && generation == Self.Generation)
                 {
-                    self.Generation = (byte) (generation + 1);
+                    Self.Generation = (byte) (generation + 1);
                 }
             }
         }
@@ -442,12 +448,6 @@ namespace Diffused.Core.Implementations.GossipV1
 
         public override async Task StopAsync()
         {
-
-            if (executingTask == null)
-            {
-                return;
-            }
-
             cts.Cancel();
 
             await transport.DisconnectAsync();

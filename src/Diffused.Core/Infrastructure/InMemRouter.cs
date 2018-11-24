@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
 namespace Diffused.Core.Infrastructure
@@ -12,10 +13,14 @@ namespace Diffused.Core.Infrastructure
             Connections = new ConcurrentDictionary<string, ITransport>();
         }
 
-        public Task<ITransport> Register(Address address = null, bool oneWay = true)
+        public Task<ITransport> Register(Address address, bool oneWay)
         {
+            if (address == null)
+            {
+                throw new Exception("Address must be defined!");
+            }
+
             var trans = new InMemRouterTransport(this, address, oneWay);
-            address = trans.Address;
             Connections.AddOrUpdate(address.Value, trans, (s, t) => trans);
             return Task.FromResult((ITransport) trans);
         }

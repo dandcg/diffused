@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Diffused.Core.Implementations.Swim;
 using Diffused.Core.Infrastructure;
 
-namespace Diffused.Tests.GossipV1
+namespace Diffused.Tests.Swim
 {
     public class NodeCollection : List<SwimNode>
     {

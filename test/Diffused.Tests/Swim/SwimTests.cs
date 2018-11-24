@@ -7,15 +7,15 @@ using Serilog;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Diffused.Tests.GossipV1
+namespace Diffused.Tests.Swim
 {
-    public class GossipV1Tests : IDisposable
+    public class SwimTests : IDisposable
     {
         private readonly ServiceCollection services;
         private readonly ServiceProvider serviceProvider;
         private readonly NodeFactory nodeFactory;
 
-        public GossipV1Tests(ITestOutputHelper output)
+        public SwimTests(ITestOutputHelper output)
         {
             services = new ServiceCollection();
 

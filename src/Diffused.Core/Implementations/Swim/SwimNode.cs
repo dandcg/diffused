@@ -17,8 +17,8 @@ namespace Diffused.Core.Implementations.Swim
         private int protocolPeriodMs;
         private int ackTimeoutMs;
         private int numberOfIndirectEndpoints;
-        private Address[] seedMembers;
-        internal volatile bool Bootstrapping;
+        public Address[] SeedMembers { get; set; }
+        private volatile bool bootstrapping;
         private readonly object memberLocker = new object();
         private readonly Dictionary<Address, Member> members = new Dictionary<Address, Member>();
         private readonly object awaitingAcksLock = new object();
@@ -43,8 +43,8 @@ namespace Diffused.Core.Implementations.Swim
             protocolPeriodMs = config.ProtocolPeriodMilliseconds;
             ackTimeoutMs = config.AckTimeoutMilliseconds;
             numberOfIndirectEndpoints = config.NumberOfIndirectEndpoints;
-            seedMembers = config.SeedMembers;
-            Bootstrapping = config.SeedMembers != null && config.SeedMembers.Length > 0;
+            SeedMembers = config.SeedMembers;
+         
 
             Self = new Member
             {
@@ -62,6 +62,8 @@ namespace Diffused.Core.Implementations.Swim
 
             logger.LogInformation("Node {LocalAddress} starting", Self.Address);
 
+            bootstrapping = SeedMembers != null && SeedMembers.Length > 0;
+
             var bootstrapper = Task.Run(() => Bootstraper(cts.Token), cts.Token);
 
             var listener = Task.Run(() => Listener(cts.Token), cts.Token);
@@ -73,15 +75,15 @@ namespace Diffused.Core.Implementations.Swim
 
         private async Task Bootstraper(CancellationToken cancellationToken)
         {
-            if (Bootstrapping)
+            if (bootstrapping)
             {
                 logger.LogInformation("Node {LocalAddress} bootstrapping off seeds", Self.Address);
 
-                while (Bootstrapping && !cancellationToken.IsCancellationRequested)
+                while (bootstrapping && !cancellationToken.IsCancellationRequested)
                 {
-                    var i = rand.Next(0, seedMembers.Length);
+                    var i = rand.Next(0, SeedMembers.Length);
 
-                    await PingAsync(seedMembers[i]);
+                    await PingAsync(SeedMembers[i]);
 
                     await Task.Delay(protocolPeriodMs, cancellationToken);
                 }
@@ -105,9 +107,9 @@ namespace Diffused.Core.Implementations.Swim
 
                     logger.LogDebug("{LocalAddress} received {MessageType} from {RemoteEndPoint}", Self.Address, message.GetType().Name, request.RemoteAddress);
 
-                    if (Bootstrapping)
+                    if (bootstrapping)
                     {
-                        Bootstrapping = false;
+                        bootstrapping = false;
                         logger.LogInformation("GossipV1 finished bootstrapping");
                     }
 

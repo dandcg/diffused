@@ -1,6 +1,6 @@
 using Diffused.Core.Infrastructure;
 
-namespace Diffused.Core.Implementations.GossipV1.Messages
+namespace Diffused.Core.Implementations.Swim.Messages
 {
     public class AckRequest : GossipV1Message
 

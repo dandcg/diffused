@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Diffused.Core.Implementations.GossipV1;
+using Diffused.Core.Implementations.Swim;
 using Diffused.Core.Infrastructure;
 
 namespace Diffused.Tests.GossipV1
 {
-    public class NodeCollection : List<GossipV1Node>
+    public class NodeCollection : List<SwimNode>
     {
         public static NodeCollection Create(NodeFactory nf, int n)
         {
@@ -13,7 +13,7 @@ namespace Diffused.Tests.GossipV1
 
             for (int i = 0; i < n; i++)
             {
-                var node = nf.CreateGossipV1(new GossipV1NodeConfig {ListenAddress = new Address($"Node[{i+1}]")}) as GossipV1Node;
+                var node = nf.CreateSwimNode(new SwimNodeConfig {ListenAddress = new Address($"Node[{i + 1}]")}) as SwimNode;
                 nodeCollection.Add(node);
             }
 

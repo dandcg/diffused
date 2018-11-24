@@ -3,21 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Diffused.Core.Implementations.GossipV1.Messages;
-using Diffused.Core.Implementations.GossipV1.Model;
+using Diffused.Core.Implementations.Swim.Messages;
+using Diffused.Core.Implementations.Swim.Model;
 using Diffused.Core.Infrastructure;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace Diffused.Core.Implementations.GossipV1
+namespace Diffused.Core.Implementations.Swim
 {
-    public class GossipV1Node : Node
+    public class SwimNode : Node
     {
         public Member Self { get; private set; }
         private int protocolPeriodMs;
         private int ackTimeoutMs;
         private int numberOfIndirectEndpoints;
-        private  Address[] seedMembers;
+        private Address[] seedMembers;
         internal volatile bool Bootstrapping;
         private readonly object memberLocker = new object();
         private readonly Dictionary<Address, Member> members = new Dictionary<Address, Member>();
@@ -31,18 +31,15 @@ namespace Diffused.Core.Implementations.GossipV1
         private ITransport transport;
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
 
-
-        public GossipV1Node(ILogger<GossipV1Node> logger, IMediator mediator,  ITransportFactory transportFactory)
+        public SwimNode(ILogger<SwimNode> logger, IMediator mediator, ITransportFactory transportFactory)
         {
             this.logger = logger;
             this.mediator = mediator;
             this.transportFactory = transportFactory;
-
         }
 
-        public void Configure(GossipV1NodeConfig config)
+        public void Configure(SwimNodeConfig config)
         {
-
             protocolPeriodMs = config.ProtocolPeriodMilliseconds;
             ackTimeoutMs = config.AckTimeoutMilliseconds;
             numberOfIndirectEndpoints = config.NumberOfIndirectEndpoints;
@@ -65,11 +62,11 @@ namespace Diffused.Core.Implementations.GossipV1
 
             logger.LogInformation("Node {LocalAddress} starting", Self.Address);
 
-            var bootstrapper = Task.Run(()=> Bootstraper(cts.Token), cts.Token);
+            var bootstrapper = Task.Run(() => Bootstraper(cts.Token), cts.Token);
 
-            var listener = Task.Run(()=>Listener(cts.Token), cts.Token);
+            var listener = Task.Run(() => Listener(cts.Token), cts.Token);
 
-            var gossiper =Task.Run(()=> Gossiper(cts.Token), cts.Token);
+            var gossiper = Task.Run(() => Gossiper(cts.Token), cts.Token);
 
             await Task.WhenAll(bootstrapper, listener, gossiper);
         }
@@ -106,7 +103,7 @@ namespace Diffused.Core.Implementations.GossipV1
 
                     var message = request.Message;
 
-                    logger.LogDebug("{LocalAddress} received {MessageType} from {RemoteEndPoint}",Self.Address, message.GetType().Name, request.RemoteAddress);
+                    logger.LogDebug("{LocalAddress} received {MessageType} from {RemoteEndPoint}", Self.Address, message.GetType().Name, request.RemoteAddress);
 
                     if (Bootstrapping)
                     {
@@ -452,7 +449,5 @@ namespace Diffused.Core.Implementations.GossipV1
 
             await transport.DisconnectAsync();
         }
-
-   
     }
 }

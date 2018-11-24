@@ -1,7 +1,7 @@
-using Diffused.Core.Implementations.GossipV1.Model;
+using Diffused.Core.Implementations.Swim.Model;
 using Diffused.Core.Infrastructure;
 
-namespace Diffused.Core.Implementations.GossipV1.Messages
+namespace Diffused.Core.Implementations.Swim.Messages
 {
     public class MemberData
     {

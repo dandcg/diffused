@@ -1,4 +1,4 @@
-namespace Diffused.Core.Implementations.GossipV1.Model
+namespace Diffused.Core.Implementations.Swim.Model
 {
     public enum MessageType : byte
     {

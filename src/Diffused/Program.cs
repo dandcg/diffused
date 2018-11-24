@@ -1,8 +1,6 @@
 ﻿using System.Threading.Tasks;
-using Diffused.Core;
 using Diffused.Core.Infrastructure;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;

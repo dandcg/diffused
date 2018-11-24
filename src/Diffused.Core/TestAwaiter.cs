@@ -7,9 +7,14 @@ namespace Diffused.Core
     {
         private static readonly BufferBlock<object> queue = new BufferBlock<object>();
 
-        public static Task SendAsync() => queue.SendAsync(new object());
+        public static Task SendAsync()
+        {
+            return queue.SendAsync(new object());
+        }
 
-        public static Task ReceiveAsync() => queue.ReceiveAsync();
-
+        public static Task ReceiveAsync()
+        {
+            return queue.ReceiveAsync();
+        }
     }
 }

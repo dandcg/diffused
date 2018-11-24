@@ -1,5 +1,5 @@
 ﻿using Diffused.Core.Actors.Test;
-using Diffused.Core.Implementations.GossipV1;
+using Diffused.Core.Implementations.Swim;
 using Diffused.Core.Implementations.Test;
 using Diffused.Core.Mediatr.Actor;
 using MediatR;
@@ -12,8 +12,6 @@ namespace Diffused.Core.Infrastructure
         public static void AddNodeServices(this IServiceCollection services)
 
         {
-   
-
             services.AddScoped<ActorManager>();
             services.AddMediatR(typeof(TestHandler));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ActorBehaviour<,>));
@@ -22,7 +20,7 @@ namespace Diffused.Core.Infrastructure
             services.AddTransient<NodeFactory>();
 
             services.AddScoped<TestNode>();
-            services.AddScoped<GossipV1Node>();
+            services.AddScoped<SwimNode>();
 
             services.AddScoped<ITransportFactory, TransportFactory>();
 

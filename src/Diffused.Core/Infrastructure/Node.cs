@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace Diffused.Core.Infrastructure
 {
@@ -12,7 +8,6 @@ namespace Diffused.Core.Infrastructure
 
         public Task StartAsync()
         {
-
             executingTask = RunAsync();
 
             return executingTask.IsCompleted ? executingTask : Task.CompletedTask;
@@ -21,6 +16,5 @@ namespace Diffused.Core.Infrastructure
         protected abstract Task RunAsync();
 
         public abstract Task StopAsync();
-
     }
 }

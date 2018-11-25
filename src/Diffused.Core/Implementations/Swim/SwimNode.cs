@@ -20,7 +20,7 @@ namespace Diffused.Core.Implementations.Swim
         public Address[] SeedMembers { get; set; }
         private volatile bool bootstrapping;
         private readonly object memberLocker = new object();
-        private readonly Dictionary<Address, Member> members = new Dictionary<Address, Member>();
+        private readonly Dictionary<string, Member> members = new Dictionary<string, Member>();
 
         public IList<Member> Members
         {
@@ -37,7 +37,7 @@ namespace Diffused.Core.Implementations.Swim
         }
 
         private readonly object awaitingAcksLock = new object();
-        private volatile Dictionary<Address, DateTime> awaitingAcks = new Dictionary<Address, DateTime>();
+        private volatile Dictionary<string, DateTime> awaitingAcks = new Dictionary<string, DateTime>();
         private DateTime lastProtocolPeriod = DateTime.Now;
         private readonly Random rand = new Random();
         private readonly ILogger logger;
@@ -157,7 +157,7 @@ namespace Diffused.Core.Implementations.Swim
 
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "GossipV1 threw an unhandled exception \n{message} \n{stacktrace}", ex.Message, ex.StackTrace);
+                    logger.LogError(ex, "{LocalAddress} threw an unhandled exception \n{message} \n{stacktrace}",Self.Address, ex.Message, ex.StackTrace);
                 }
             }
         }
@@ -202,7 +202,7 @@ namespace Diffused.Core.Implementations.Swim
 
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "GossipV1 threw an unhandled exception \n{message} \n{stacktrace}", ex.Message, ex.StackTrace);
+                    logger.LogError(ex, "{LocalAddress} threw an unhandled exception \n{message} \n{stacktrace}",Self.Address, ex.Message, ex.StackTrace);
                 }
 
                 await WaitForProtocolPeriod();
@@ -224,7 +224,7 @@ namespace Diffused.Core.Implementations.Swim
             else if (message is PingRequest)
             {
                 // if we are the destination send an ack request
-                if (EndPointsMatch(destinationAddress, Self.Address))
+                if (destinationAddress.Equals(Self.Address))
                 {
                     await AckRequestAsync(sourceAddress, request.RemoteAddress, membersList);
                 }
@@ -239,7 +239,7 @@ namespace Diffused.Core.Implementations.Swim
             else if (message is AckRequest)
             {
                 // if we are the destination clear awaiting ack
-                if (EndPointsMatch(destinationAddress, Self.Address))
+                if (destinationAddress.Equals(Self.Address))
                 {
                     RemoveAwaitingAck(sourceAddress);
                 }
@@ -324,11 +324,11 @@ namespace Diffused.Core.Implementations.Swim
                 ushort servicePort = memberState == MemberState.Alive ? m.ServicePort : (ushort) 0;
 
                 // we don't add ourselves to the member list
-                if (!EndPointsMatch(address, Self.Address))
+                if (address.Value!=Self.Address.Value)
                 {
                     lock (memberLocker)
                     {
-                        if (members.TryGetValue(address, out var member) &&
+                        if (members.TryGetValue(address.Value, out var member) &&
                             (member.IsLaterGeneration(generation) ||
                              member.Generation == generation && member.IsStateSuperseded(memberState)))
                         {
@@ -350,7 +350,7 @@ namespace Diffused.Core.Implementations.Swim
                                 Service = service
                             };
 
-                            members.Add(address, member);
+                            members.Add(address.Value, member);
                             logger.LogInformation("{LocalAddress} member added {member}", Self.Address, member);
                         }
                     }
@@ -422,7 +422,7 @@ namespace Diffused.Core.Implementations.Swim
         {
             lock (memberLocker)
             {
-                if (members.TryGetValue(address, out var member) && member.State == MemberState.Alive)
+                if (members.TryGetValue(address.Value, out var member) && member.State == MemberState.Alive)
                 {
                     member.Update(MemberState.Suspicious);
                     logger.LogInformation("{LocalAddress} suspicious member {member}", Self.Address, member);
@@ -459,9 +459,9 @@ namespace Diffused.Core.Implementations.Swim
         {
             lock (awaitingAcksLock)
             {
-                if (!awaitingAcks.ContainsKey(address))
+                if (!awaitingAcks.ContainsKey(address.Value))
                 {
-                    awaitingAcks.Add(address, DateTime.Now.AddMilliseconds(protocolPeriodMs * 5));
+                    awaitingAcks.Add(address.Value, DateTime.Now.AddMilliseconds(protocolPeriodMs * 5));
                 }
             }
         }
@@ -471,7 +471,7 @@ namespace Diffused.Core.Implementations.Swim
             bool wasNotAcked;
             lock (awaitingAcksLock)
             {
-                wasNotAcked = awaitingAcks.ContainsKey(address);
+                wasNotAcked = awaitingAcks.ContainsKey(address.Value);
             }
 
             return wasNotAcked;
@@ -481,18 +481,13 @@ namespace Diffused.Core.Implementations.Swim
         {
             lock (awaitingAcksLock)
             {
-                if (awaitingAcks.ContainsKey(address))
+                if (awaitingAcks.ContainsKey(address.Value))
                 {
-                    awaitingAcks.Remove(address);
+                    awaitingAcks.Remove(address.Value);
                 }
             }
         }
-
-        private bool EndPointsMatch(Address ipEndPointA, Address ipEndPointB)
-        {
-            return ipEndPointA.Value == ipEndPointB.Value;
-        }
-
+        
         private async Task WaitForProtocolPeriod()
         {
             var syncTime = protocolPeriodMs - (int) (DateTime.Now - lastProtocolPeriod).TotalMilliseconds;

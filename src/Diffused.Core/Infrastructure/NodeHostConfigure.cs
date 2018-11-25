@@ -1,5 +1,5 @@
 ﻿using Diffused.Core.Actors.Test;
-using Diffused.Core.Implementations.Swim;
+using Diffused.Core.Implementations.Gossip.Swim;
 using Diffused.Core.Implementations.Test;
 using Diffused.Core.Mediatr.Actor;
 using MediatR;

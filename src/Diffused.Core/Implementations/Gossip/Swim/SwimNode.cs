@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Diffused.Core.Implementations.Swim.Messages;
-using Diffused.Core.Implementations.Swim.Model;
+using Diffused.Core.Implementations.Gossip.Swim.Messages;
+using Diffused.Core.Implementations.Gossip.Swim.Model;
 using Diffused.Core.Infrastructure;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace Diffused.Core.Implementations.Swim
+namespace Diffused.Core.Implementations.Gossip.Swim
 {
     public class SwimNode : Node
     {

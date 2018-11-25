@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Diffused.Core.Implementations.Swim;
+using Diffused.Core.Implementations.Gossip.Swim;
 using Diffused.Core.Implementations.Test;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

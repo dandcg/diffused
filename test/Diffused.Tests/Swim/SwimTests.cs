@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Diffused.Core.Implementations.Swim.Model;
+using Diffused.Core.Implementations.Gossip.Swim.Model;
 using Diffused.Core.Infrastructure;
 using Diffused.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;

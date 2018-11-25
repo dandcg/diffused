@@ -1,7 +1,7 @@
 using System.Threading;
 using Diffused.Core.Infrastructure;
 
-namespace Diffused.Core.Implementations.Swim.Model
+namespace Diffused.Core.Implementations.Gossip.Swim.Model
 {
     public class Member
     {

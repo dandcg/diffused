@@ -1,4 +1,4 @@
-namespace Diffused.Core.Implementations.Swim.Model
+namespace Diffused.Core.Implementations.Gossip.Swim.Model
 {
     public enum MemberState : byte
     {

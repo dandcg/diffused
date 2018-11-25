@@ -1,6 +1,6 @@
 ﻿using Diffused.Core.Infrastructure;
 
-namespace Diffused.Core.Implementations.Swim
+namespace Diffused.Core.Implementations.Gossip.Swim
 {
     public class SwimNodeConfig
     {

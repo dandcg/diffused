@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Diffused.Core.Implementations.Swim;
+using Diffused.Core.Implementations.Gossip.Swim;
 using Diffused.Core.Infrastructure;
 
 namespace Diffused.Tests.Swim

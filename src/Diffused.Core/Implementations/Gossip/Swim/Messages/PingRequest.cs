@@ -1,7 +1,7 @@
-using Diffused.Core.Implementations.Swim.Model;
+using Diffused.Core.Implementations.Gossip.Swim.Model;
 using Diffused.Core.Infrastructure;
 
-namespace Diffused.Core.Implementations.Swim.Messages
+namespace Diffused.Core.Implementations.Gossip.Swim.Messages
 {
     public class PingRequest : Message, ISwimMessage
     {
